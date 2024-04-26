@@ -12,6 +12,7 @@ from .views import (
     ExecutorDetailView,
     CustomerListView,
     CustomerDetailView,
+    ExecutorsRequestsListView, OrderRequestView, CustomerAccessOrderView, CustomerAccessOrdersView,
 )
 
 app_name = "freelance"
@@ -30,5 +31,9 @@ urlpatterns = [
     path("orders/edit/<int:pk>", OrderEditView.as_view(), name="order-edit"),
     path("orders/", OrderListView.as_view(), name="order-list"),
     path("orders/<int:pk>/", OrderDetailView.as_view(), name="order-detail"),
-    path("orders/success/", OrderListView.as_view() , name="order-success"),
+    path("orders/success/", OrderListView.as_view(), name="order-success"),
+    path("executors/requests/", ExecutorsRequestsListView.as_view(), name="executor-requests"),
+    path("orders/request/<int:pk>", OrderRequestView.as_view(), name="order-request"),
+    path("customer/access/orders/", CustomerAccessOrdersView.as_view(), name="customer-access-orders"),
+    path("customer/access/order/<int:pk>", CustomerAccessOrderView.as_view(), name="customer-access-order"),
 ]

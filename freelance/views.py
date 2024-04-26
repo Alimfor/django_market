@@ -1,23 +1,67 @@
-from django.contrib.auth.models import Group
-from django.core.paginator import PageNotAnInteger, EmptyPage, Paginator
+from django.db.models.base import Model as Model
 from django.db import transaction
-from django.db.models import OuterRef, Exists, Q, Prefetch
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views import View
 from django.views.generic import (
     ListView,
     DetailView,
-    TemplateView,
     CreateView,
     UpdateView,
 )
+
+
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.views import LogoutView
+from django.db.models import Exists, OuterRef, Q, Prefetch
+
 from django.urls import reverse_lazy
 
-from freelance.forms import OrderForm, UserRegistrationForm, OrderRequestForm
-from .models import Service, Order, Executor, Customer, OrderRequest
+from freelance.forms import OrderForm
+from .models import Service, Order, OrderRequest, Executor, Customer
+
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib.auth.models import Group
+
+from django.views import View
+from .forms import UserRegistrationForm, OrderRequestForm
+
+
+class RegisterView(View):
+    form_class = UserRegistrationForm
+    template_name = "registration/register.html"
+
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {"form": form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return render(request, self.template_name, {"form": form})
+
+        user_data = form.cleaned_data
+        user_type = user_data["user_type"]
+        group_name = {"customer": "Customers", "executor": "Executors"}.get(user_type)
+
+        if group_name is None:
+            return render(
+                request,
+                self.template_name,
+                {"form": form, "error": "Invalid user type"},
+            )
+
+        with transaction.atomic():
+            group, _ = Group.objects.get_or_create(name=group_name)
+            user = form.save()  # Сохраняем пользователя и его профиль через форму
+            user.groups.add(group)
+            user.save()
+
+            # Создаем Executor или Customer, используя профиль пользователя
+        if user_type == "customer":
+            customer, _ = Customer.objects.get_or_create(profile=user.userprofile)
+        elif user_type == "executor":
+            executor, _ = Executor.objects.get_or_create(profile=user.userprofile)
+
+        return redirect("login")
 
 
 class CustomLogoutView(LogoutView):
@@ -49,9 +93,7 @@ class MainPageView(ListView):
 
 class ExecutorListView(ListView):
     model = Executor
-    template_name = (
-        "freelance/executors/executor_list.html"  # Укажите ваш путь к шаблону
-    )
+    template_name = "freelance/executors/executor_list.html"
     context_object_name = "executors"
 
 
@@ -77,6 +119,88 @@ class CustomerDetailView(DetailView):
         "freelance/customers/customer_detail.html"  # Укажите ваш путь к шаблону
     )
     context_object_name = "customer"
+
+
+class CustomerAccessOrdersView(LoginRequiredMixin, ListView):
+    model = OrderRequest
+    template_name = (
+        "freelance/customers/customer_access_orders.html"  # Укажите ваш путь к шаблону
+    )
+    context_object_name = "orders"
+
+    def get_queryset(self):
+        """Получаем список заказов для текущего пользователя"""
+        if self.request.user.is_authenticated and self.request.user.groups.filter(
+            name="Customers"
+        ):
+            return Order.objects.filter(customer__profile__user=self.request.user)
+        return OrderRequest.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        order_views = []
+        order_requests = OrderRequest.objects.filter(
+            order__customer__profile__user=self.request.user
+        )
+
+        print(order_requests)
+        for order_request in order_requests:
+            order_views.append(
+                {
+                    "order_request": order_request,
+                    "order": order_request.order,
+                }
+            )
+        context["order_requests"] = order_requests
+        context["order_views"] = order_views
+        return context
+
+
+class CustomerAccessOrderView(DetailView):
+    model = Order
+    template_name = (
+        "freelance/customers/customer_access_order.html"  # Укажите ваш путь к шаблону
+    )
+    context_object_name = "order"
+
+    def get_queryset(self):
+        """Получаем список заказов для текущего пользователя"""
+        if self.request.user.is_authenticated and self.request.user.groups.filter(
+            name="Customers"
+        ):
+            orders = Order.objects.prefetch_related(
+                Prefetch(
+                    "requests",
+                    queryset=OrderRequest.objects.select_related("executor").distinct(),
+                )
+            )
+
+            return orders
+
+        return OrderRequest.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["order_requests"] = self.object.requests.all()
+        try:
+            context["accepted_executor"] = self.object.requests.get(status="accepted")
+        except OrderRequest.DoesNotExist:
+            context["accepted_executor"] = None
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = request.POST
+        accepted_executor = form.get("executor")
+        executors = OrderRequest.objects.filter(order__id=form.get("order"))
+        for executor in executors:
+            executor.status = "rejected"
+            if int(accepted_executor) == executor.executor.pk:
+                executor.status = "accepted"
+            executor.save()
+
+        print(form)
+
+        return redirect("freelance:customer-access-orders")
 
 
 class ServiceListView(ListView):
@@ -158,7 +282,9 @@ class OrderListView(UserPassesTestMixin, ListView):
 
         user_groups = self.request.user.groups.all()
         if user_groups.filter(name="Executors").exists():
-            executor_requests = OrderRequest.objects.select_related("order").all()
+            executor_requests = OrderRequest.objects.select_related("order").filter(
+                executor__profile__user=self.request.user
+            )
             return self.get_executor_order_views(executor_requests)
 
         return [(order, None) for order in Order.objects.all()]
@@ -242,7 +368,7 @@ class OrderCreateView(LoginRequiredMixin, CreateView):
         """
         # Получаем объект Customer для текущего пользователя
         customer_profile, created = Customer.objects.get_or_create(
-            user=self.request.user
+            profile__user=self.request.user
         )
         form.instance.customer = customer_profile
         return super().form_valid(form)
@@ -265,10 +391,10 @@ class OrderEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             HttpResponse: Ответ, возвращаемый методом form_valid родительского класса.
         """
         if (
-                Order.objects.get(id=self.kwargs["pk"]).customer is None
-                or self.request.user.userprofile
-                != Order.objects.get(id=self.kwargs["pk"]).customer.profile
-                or not self.request.user.is_authenticated
+            Order.objects.get(id=self.kwargs["pk"]).customer == None
+            or self.request.user.userprofile
+            != Order.objects.get(id=self.kwargs["pk"]).customer.profile
+            or not self.request.user.is_authenticated
         ):
             raise PermissionDenied
         context = super().get_context_data(**kwargs)
@@ -297,45 +423,6 @@ class OrderEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         """
         obj = self.get_object()
         return obj.customer.profile == self.request.user.userprofile
-
-
-class RegisterView(View):
-    form_class = UserRegistrationForm
-    template_name = "registration/register.html"
-
-    def get(self, request, *args, **kwargs):
-        form = self.form_class()
-        return render(request, self.template_name, {"form": form})
-
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST)
-        if not form.is_valid():
-            return render(request, self.template_name, {"form": form})
-
-        user_data = form.cleaned_data
-        user_type = user_data["user_type"]
-        group_name = {"customer": "Customers", "executor": "Executors"}.get(user_type)
-
-        if group_name is None:
-            return render(
-                request,
-                self.template_name,
-                {"form": form, "error": "Invalid user type"},
-            )
-
-        with transaction.atomic():
-            group, _ = Group.objects.get_or_create(name=group_name)
-            user = form.save()  # Сохраняем пользователя и его профиль через форму
-            user.groups.add(group)
-            user.save()
-
-            # Создаем Executor или Customer, используя профиль пользователя
-        if user_type == "customer":
-            customer, _ = Customer.objects.get_or_create(profile=user.userprofile)
-        elif user_type == "executor":
-            executor, _ = Executor.objects.get_or_create(profile=user.userprofile)
-
-        return redirect("login")
 
 
 class OrderRequestView(UpdateView):
@@ -395,85 +482,3 @@ class ExecutorsRequestsListView(ListView):
         context = super().get_context_data(**kwargs)
         context["title_label"] = "Заявки"
         return context
-
-
-class CustomerAccessOrdersView(LoginRequiredMixin, ListView):
-    model = OrderRequest
-    template_name = (
-        "freelance/customers/customer_access_orders.html"  # Укажите ваш путь к шаблону
-    )
-    context_object_name = "orders"
-
-    def get_queryset(self):
-        """Получаем список заказов для текущего пользователя"""
-        if self.request.user.is_authenticated and self.request.user.groups.filter(
-                name="Customers"
-        ):
-            return Order.objects.filter(customer__profile__user=self.request.user)
-        return OrderRequest.objects.none()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        order_views = []
-        order_requests = OrderRequest.objects.filter(
-            order__customer__profile__user=self.request.user
-        )
-
-        print(order_requests)
-        for order_request in order_requests:
-            order_views.append(
-                {
-                    "order_request": order_request,
-                    "order": order_request.order,
-                }
-            )
-        context["order_requests"] = order_requests
-        context["order_views"] = order_views
-        return context
-
-
-class CustomerAccessOrderView(DetailView):
-    model = Order
-    template_name = (
-        "freelance/customers/customer_access_order.html"  # Укажите ваш путь к шаблону
-    )
-    context_object_name = "order"
-
-    def get_queryset(self):
-        """Получаем список заказов для текущего пользователя"""
-        if self.request.user.is_authenticated and self.request.user.groups.filter(
-            name="Customers"
-        ):
-            orders = Order.objects.prefetch_related(
-                Prefetch(
-                    "requests",
-                    queryset=OrderRequest.objects.select_related("executor").distinct(),
-                )
-            )
-
-            return orders
-
-        return OrderRequest.objects.none()
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["order_requests"] = self.object.requests.all()
-        try:
-            context["accepted_executor"] = self.object.requests.get(status="accepted")
-        except OrderRequest.DoesNotExist:
-            context["accepted_executor"] = None
-        return context
-
-    def post(self, request, *args, **kwargs):
-        form = request.POST
-        accepted_executor = form.get("executor")
-        executors = OrderRequest.objects.filter(order__id=form.get("order"))
-        for executor in executors:
-            executor.status = "rejected"
-            if int(accepted_executor) == executor.executor.pk:
-                executor.status = "accepted"
-            executor.save()
-
-        print(form)
-
-        return redirect("freelance:customer-access-orders")

@@ -1,29 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-
-from .models import Order, UserProfile, OrderRequest
-
-
-class OrderForm(forms.ModelForm):
-    class Meta:
-        model = Order
-        fields = ["order_type", "title", "description", "price"]
-
-    def clean(self):
-        cleaned_data = super().clean()
-        return cleaned_data
-
-    def save(self, commit=True):
-        order = super().save(commit=False)
-        if commit:
-            order.save()
-        return order
-
-    def delete(self, commit=True):
-        order = super().save(commit=False)
-        if commit:
-            order.delete()
-        return order
+from django.contrib.auth.models import User
+from .models import UserProfile, Customer, Executor, Order, OrderRequest
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -120,6 +98,28 @@ class UserRegistrationForm(UserCreationForm):
         return user
 
 
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = Order
+        fields = ["order_type", "title", "description", "price"]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
+
+    def save(self, commit=True):
+        order = super().save(commit=False)
+        if commit:
+            order.save()
+        return order
+
+    def delete(self, commit=True):
+        order = super().save(commit=False)
+        if commit:
+            order.delete()
+        return order
+
+
 class OrderRequestForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
@@ -136,8 +136,10 @@ class OrderRequestForm(forms.ModelForm):
         model = OrderRequest
         fields = "__all__"
 
+
     def save(self, commit=True):
         order_request = super().save(commit=False)
         if commit:
             order_request.save()
         return order_request
+

@@ -10,6 +10,9 @@
         <li>
             <a href="{% url 'freelance:order-create' %}">Создать заказ</a>
         </li>
+        <li>
+            <a href="{% url 'freelance:customer-access-orders' %}">Просмотреть заказы</a>
+        </li>
         {% endif %}
         {% if user|has_group:"Executors" %}
         <li>

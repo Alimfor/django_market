@@ -33,8 +33,8 @@ class Executor(models.Model):
 
     def __str__(self):
         return (
-                super().__str__()
-                + f" - Навыки: {self.skills if self.skills else 'Не указаны'}"
+            super().__str__()
+            + f" - Навыки: {self.skills if self.skills else 'Не указаны'}"
         )
 
     class Meta:
@@ -51,9 +51,7 @@ class Customer(models.Model):
     preferences = models.TextField(blank=True, verbose_name="Предпочтения")
 
     def __str__(self):
-        return (
-            f"{self.profile.user.username} - email: {self.profile.user.email if self.profile.user.email else 'Не указаны'}"
-        )
+        return f"{self.profile.user.username} - email: {self.profile.user.email if self.profile.user.email else 'Не указаны'}"
 
     class Meta:
         verbose_name = "Заказчик"
@@ -92,6 +90,9 @@ class Service(models.Model):
 
 
 class Order(models.Model):
+    # service = models.OneToOneField(
+    #     Service, on_delete=models.CASCADE, primary_key=True, verbose_name="Услуга"
+    # )
     order_type = models.CharField(
         max_length=11,
         choices=Service.ServicesType.choices,
@@ -127,24 +128,12 @@ class Order(models.Model):
         verbose_name="Исполнитель",
     )
 
-
-class Tag(models.Model):
-    name = models.CharField(max_length=100, verbose_name="Имя тега")
-    service = models.ForeignKey(
-        Service,
-        on_delete=models.CASCADE,
-        related_name="tags",
-        blank=True,
-        null=True,
-        verbose_name="Услуга",
-    )
-
     def __str__(self):
-        return self.name
+        return self.title or self.description or "Неизвестный заказ"
 
     class Meta:
-        verbose_name = "Тег"
-        verbose_name_plural = "Теги"
+        verbose_name = "Заказ"
+        verbose_name_plural = "Заказы"
 
 
 class OrderRequest(models.Model):
@@ -159,7 +148,9 @@ class OrderRequest(models.Model):
         default=None,
         null=True,
     )
-    about_executor = models.TextField(verbose_name="Об исполнителе", blank=True, null=True)
+    about_executor = models.TextField(
+        verbose_name="Об исполнителе", blank=True, null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
     status = models.CharField(
         max_length=20,
@@ -179,3 +170,22 @@ class OrderRequest(models.Model):
 
     def __str__(self):
         return f"{self.order.title} - {self.executor.profile.user.username}"
+
+
+class Tag(models.Model):
+    name = models.CharField(max_length=100, verbose_name="Имя тега")
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name="tags",
+        blank=True,
+        null=True,
+        verbose_name="Услуга",
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Тег"
+        verbose_name_plural = "Теги"

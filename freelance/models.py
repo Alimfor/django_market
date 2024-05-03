@@ -13,7 +13,7 @@ class UserProfile(models.Model):
     phone = models.CharField(
         max_length=12, blank=True, null=True, verbose_name="Телефон"
     )
-    rating = models.FloatField(default=0.0, verbose_name="Рейтинг")
+    rating = models.FloatField(default=5.0, verbose_name="Рейтинг")
 
     def __str__(self):
         phone_display = self.phone if self.phone else "Нет телефона"

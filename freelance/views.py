@@ -143,7 +143,6 @@ class CustomerAccessOrdersView(LoginRequiredMixin, ListView):
             order__customer__profile__user=self.request.user
         )
 
-        print(order_requests)
         for order_request in order_requests:
             order_views.append(
                 {

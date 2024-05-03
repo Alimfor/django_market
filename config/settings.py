@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "corsheaders",
     # My apps
     "freelance",
+    "ratings",
 ]
 
 MIDDLEWARE = [

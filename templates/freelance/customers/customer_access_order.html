@@ -13,6 +13,7 @@
             {% if accepted_executor %}
             <h2>Исполнитель заказа:</h2>
             <h5 class="text-warning">{{ accepted_executor.executor.profile.user.username }}</h5>
+            <a class="btn btn-primary btn-sm" href="{% url 'ratings:rating_update' order.pk %}"> Рейтинг </a>
             {% else %}
             <h2>Выберите исполнителя:</h2>
         </div>

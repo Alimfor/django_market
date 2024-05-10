@@ -1,0 +1,30 @@
+{% extends 'basic/base.html' %}
+
+{% block title %}{{ service.title }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <h1>{{ service.title }}</h1>
+                <p>{{ service.description }}</p>
+            </div>
+            <div class="col-md-4">
+                <img src="{{ service.image.url }}" alt="{{ service.title }}" class="img-fluid">
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <p><strong>Создано:</strong> {{ service.created }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Обновлено:</strong> {{ service.updated }}</p>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <a href="{% url 'services:service_update' pk=service.pk %}" class="btn btn-primary">Обновить Услугу</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -26,6 +26,7 @@ from freelance.views import RegisterView
 
 urlpatterns = [
     path('', include('freelance.urls')),
+    path('services/', include('services.urls')),
     path('ratings/', include('ratings.urls')),
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls')),

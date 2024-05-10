@@ -1,0 +1,21 @@
+{% extends 'basic/base.html' %}
+
+{% block title %}Услуги{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <h1>Услуги</h1>
+            <ul class="list-group">
+                {% for service in services %}
+                <li class="list-group-item"><a href="{% url 'services:service_detail' pk=service.pk %}">{{ service.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-4">
+            <a class="btn btn-primary mt-3" href="{% url 'services:service_create' %}">Создать новую Услугу</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

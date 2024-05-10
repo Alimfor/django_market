@@ -6,6 +6,9 @@
         Профиль: {{ user.username }}
     </button>
     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+        <li>
+            <a href="{% url 'ratings:rating_list' %}">Просмотреть отзывы</a>
+        </li>
         {% if user|has_group:"Customers" %}
         <li>
             <a href="{% url 'freelance:order-create' %}">Создать заказ</a>

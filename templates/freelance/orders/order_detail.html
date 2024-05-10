@@ -14,12 +14,14 @@
         <!-- Добавьте другие детали заказа по мере необходимости -->
     </div>
 
-    {% if user.is_authenticated and user|has_group:"Customers"%}
+    {% if user.is_authenticated and user|has_group:"Customers" %}
         <div class="col-md-6 offset-md-3">
             <a class="btn btn-primary" href="{% url 'freelance:order-edit' order.pk %}">Редактировать</a>
         </div>
-    {% else %}
-
+    {% elif user.is_authenticated and user|has_group:"Executors" %}
+        <div class="text-center">
+            <a class="btn btn-warning btn-sm" href="{% url 'ratings:rating_update' order.pk %}"> Рейтинг </a>
+        </div>
     {% endif %}
 </div>
 {% endblock %}

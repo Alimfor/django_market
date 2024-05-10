@@ -1,4 +1,5 @@
 from django.db import models
+from freelance.models import OrderRequest
 
 
 class RatingOrder(models.Model):

@@ -1,0 +1,11 @@
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .models import Order
+
+
+@receiver(post_save, sender=Order)
+def order_created_or_updated(sender, instance, created, **kwargs):
+    if created:
+        print(f"Order created: {instance}")
+    else:
+        print(f"Order updated: {instance}")

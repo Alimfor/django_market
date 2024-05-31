@@ -1,9 +1,8 @@
 from django import forms
+from .models import Service
 
-from services.models import Service
 
-
-class ServiceForm(forms.ModelForm):
+class CreateServiceForm(forms.ModelForm):
     class Meta:
         model = Service
-        fields = ['title', 'description', 'image']
+        fields = ["title", "description", "image"]

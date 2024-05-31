@@ -1,10 +1,7 @@
 from django.contrib import admin
+from .models import Service
 
-from services.models import Service
+class ServicesAdmin(admin.ModelAdmin):
+    list_display = ['id', 'title', 'description']
 
-
-class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('title', 'description', 'image')
-
-
-admin.site.register(Service, ServiceAdmin)
+admin.site.register(Service, ServicesAdmin)

@@ -1,12 +1,11 @@
+from django.contrib import admin
 from django.urls import path
+from .views import CreateServiceView, DeleteServiceView, ServiceListView
 
-from services.views import ServiceCreate, ServiceUpdate, ServiceListView, ServiceDetailView
-
-app_name = "services"
+app_name = 'services'
 
 urlpatterns = [
-    path("new/", ServiceCreate.as_view(), name="service_create"),
-    path("edit/<int:pk>/", ServiceUpdate.as_view(), name="service_update"),
-    path("list/", ServiceListView.as_view(), name="service_list"),
-    path("detail/<int:pk>/", ServiceDetailView.as_view(), name="service_detail"),
+    path("", ServiceListView.as_view(), name="service_list"),
+    path("create/", CreateServiceView.as_view(), name="create"),
+    path("delete/<int:pk>/", DeleteServiceView.as_view(), name="delete"),
 ]

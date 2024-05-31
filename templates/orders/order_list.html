@@ -1,0 +1,37 @@
+{% extends 'basic/base.html' %}
+{% load static %}
+{% load order_tags %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Order List</h1>
+    {% if user.is_authenticated and user.client_profile %}
+        <a href="{% url 'order_create' %}" class="btn btn-primary mb-3">Create New Order</a>
+    {% endif %}
+        <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Заголовок</th>
+                <th scope="col">Описание</th>
+                <th scope="col">Исполнитель</th>
+                <th scope="col">Дедлайн</th>
+                <th scope="col">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <th scope="row">{{ forloop.counter }}</th>
+                <td>{{ order.title }}</td>
+                <td>{{ order.description }}</td>
+                <td>{{ order.executor.username }}</td>
+                <td>{{ order.deadline }}</td>
+                <td>
+                    <a href="{% url 'orders:order_detail' order.pk %}" class="btn btn-outline-primary">Подробнее</a>
+                </td>
+            </tr>
+            {% endfor %}    
+        </tbody>
+    </table>
+</div>
+{% endblock %}

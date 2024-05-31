@@ -1,0 +1,33 @@
+{% extends 'basic/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+<h1>Заказ</h1>
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">Заголовок</th>
+            <th scope="col">Описание</th>
+            <th scope="col">Исполнитель</th>
+            <th scope="col">Дедлайн</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th scope="row">{{ order.id }}</th>
+            <td>{{ order.title }}</td>
+            <td>{{ order.description }}</td>
+            <td>{{ order.executor.username }}</td>
+            <td>{{ order.deadline }}</td>
+        </tr>
+    </tbody>    
+</table>
+<div class="mb-3">
+<a href="{% url 'orders:order_list' %}" class="btn btn-primary">Назад</a>
+{% comment %}
+    <a href="{% url 'orders:order_update' order.pk %}" class="btn btn-primary">Изменить</a>
+    <a href="{% url 'orders:order_delete' order.pk %}" class="btn btn-primary">Удалить</a>
+{% endcomment %}
+</div>
+{% endblock %}

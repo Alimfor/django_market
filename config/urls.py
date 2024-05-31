@@ -19,23 +19,21 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from config.ddtb import DEBUG_TOOLBAR_PATH
-
-from freelance.views import RegisterView
-
+from orders.views import OrderListView
 
 urlpatterns = [
-    path('', include('freelance.urls')),
-    path('services/', include('services.urls')),
-    path('ratings/', include('ratings.urls')),
+    path('', OrderListView.as_view(), name='home'),
     path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls')),
     path('login/', auth_views.LoginView.as_view(), name='login'),
-    path('register/', RegisterView.as_view(), name='register'),
-    # path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    DEBUG_TOOLBAR_PATH, 
+    path('register/', include('users.urls'), name='register'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('orders/', include('orders.urls'), name='orders'),
+    path('ratings/', include('ratings.urls'), name='ratings'),
+    path('services/', include('services.urls'), name='services'),
+    path('executers/', include('executers.urls'), name='executers'),
+    path('customers/', include('customers.urls'), name='customers'),
 ]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+{% block head %}
     {% include 'basic/head.html' %}
-    {% block additional_head %}
+{% endblock %}
+    <body>
+    {% block content %}
     {% endblock %}
-</head>
-<body>
-    {% include 'basic/header.html' %}
-    <main>
-        {% block content %}{% endblock %}
-    </main>
-    {% include 'basic/footer.html' %}
-</body>
+    
+    {% block footer %}
+        {% include 'basic/footer.html' %}
+    {% endblock %}
+    </body>
 </html>

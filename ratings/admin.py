@@ -1,11 +1,8 @@
 from django.contrib import admin
-from ratings.models import RatingOrder
 
+from .models import Rating
 
-@admin.register(RatingOrder)
-class RatingOrderAdmin(admin.ModelAdmin):
-    list_display = ("order", "user", "testimonial") 
-    
+class RatingAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'rated_by', 'rating']
 
-
-# Register your models here.
+admin.site.register(Rating, RatingAdmin)

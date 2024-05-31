@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "orders",
     "ratings",
     "services",
+    "mainpage"
 ]
 
 MIDDLEWARE = [

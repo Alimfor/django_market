@@ -32,6 +32,7 @@ urlpatterns = [
     path('services/', include('services.urls'), name='services'),
     path('executers/', include('executers.urls'), name='executers'),
     path('customers/', include('customers.urls'), name='customers'),
+    path('mainpage/', include('mainpage.urls'), name='mainpage'),
 ]
 
 
